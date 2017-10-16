@@ -10,9 +10,9 @@ import Foundation
 
 extension Date
 {
-    func parseDateForRequest(date: Date) -> String
+    func parseDateForRequest() -> String
     {
-        return "\(date.year)-\(date.month)-\(date.day)"
+        return "\(self.year)-\(self.month)-\(self.day)"
     }
     
     init(apod_date_format : String)
