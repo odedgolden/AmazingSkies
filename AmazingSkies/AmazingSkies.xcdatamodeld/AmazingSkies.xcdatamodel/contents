@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <elements/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="12141" systemVersion="16F73" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="ASAPODItem" representedClassName=".ASAPODItem" syncable="YES" codeGenerationType="category">
+        <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
+        <attribute name="explanation" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="hdurl" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="media_type" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="service_version" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="thumbnail_image_data" optional="YES" attributeType="Binary" allowsExternalBinaryDataStorage="YES" syncable="YES"/>
+        <attribute name="title" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="url" optional="YES" attributeType="String" syncable="YES"/>
+    </entity>
+    <elements>
+        <element name="ASAPODItem" positionX="-63" positionY="-18" width="128" height="163"/>
+    </elements>
 </model>
