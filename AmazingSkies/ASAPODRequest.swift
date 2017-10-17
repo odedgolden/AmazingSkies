@@ -14,14 +14,17 @@ class ASAPODRequest
 {
     let sampleUrl = "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY"
     
-    func fetchImage(date : Date, hd : Bool, completion : @escaping (ASAPODItem) -> ()) -> ()
+    // Container for core data work
+    let container = (UIApplication.shared.delegate as? AppDelegate)?.persistentContainer
+    
+    func fetchASAPODItem(date : String, hd : Bool, completion : @escaping (ASAPODItem) -> ()) -> ()
     {
         print("\nASAPOD Request Has been Fired.\n")
-        let dateString = date.parseDateForRequest(date: date)
-        let url = "\(constants.nasaAPODURL)?date=\(dateString)&api_key=\(constants.nasaAppToken)"
+        let url = "\(constants.nasaAPODURL)?date=\(date)&api_key=\(constants.nasaAppToken)"
 
         Alamofire.request(url).responseJSON
             {
+                [weak self]
                 (response) in
                 
                 if let data = response.data
@@ -35,26 +38,23 @@ class ASAPODRequest
                     let service_version = json["service_version"].stringValue
                     let title = json["title"].stringValue
                     
-                    
-                    let apodItem = ASAPODItem(entity: ASAPODItem.entity(), insertInto: AppDelegate.persistentContainer.viewContext)
-                    apodItem.date = Date(apod_date_format: date)
-                    apodItem.explanation = explanation
-                    apodItem.url = url
-                    apodItem.hdurl = hdurl
-                    apodItem.media_type = media_type
-                    apodItem.service_version = service_version
-                    apodItem.title = title
-                    
-                    do
-                    {
-                        try AppDelegate.persistentContainer.viewContext.save()
-                        completion(apodItem)
-                    }
-                    catch let error as NSError
-                    {
-                        print("Could not save. \(error), \(error.userInfo)")
+                    self?.updateDatabase(date: date, explanation: explanation, hdurl: hdurl, media_type: media_type, service_version: service_version, title: title, url: url){(item) in
+                        completion(item)
                     }
                 }
+        }
+    }
+    
+    func updateDatabase(date: String, explanation: String, hdurl: String, media_type: String, service_version: String, title: String, url: String, completion : @escaping (ASAPODItem) -> ())
+    {
+        container?.performBackgroundTask{ (context) in
+            let item = ASAPODItem.createASAPODItem(date: date, explanation: explanation, hdurl: hdurl, media_type: media_type, service_version: service_version, title: title, url: url, context: context)
+            do {try context.save()}
+            catch let error as NSError
+            {
+                print("Could not save. \(error), \(error.userInfo)")
+            }
+            completion(item)
         }
     }
 }

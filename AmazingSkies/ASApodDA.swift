@@ -11,63 +11,50 @@ import CoreData
 
 class ASApodDA
 {
-    private let numberOfImagesToFetch = 8
+    private let numberOfImagesToFetch = 100
     let calendar = NSCalendar.current
-    let managedContext = AppDelegate.persistentContainer.viewContext
-    
-    func fetchNewImages(completion : @escaping ([ASAPODItem]) -> ()) -> ()
-    {
-        // Check when was the last update
-        var items = [ASAPODItem]()
+    let managedContext : NSManagedObjectContext!
+    let apodRequest = ASAPODRequest()
 
-        let numberOfImagesMissing = calculateNumberOfDaysSinceLastUpdate()
-        fetchNextImagesBlock(size: numberOfImagesMissing, offset: 0, completion: completion)
+    init(managedContext : NSManagedObjectContext)
+    {
+        self.managedContext = managedContext
     }
     
-    private func fetchNextImagesBlock(size : Int, offset : Int, completion : @escaping ([ASAPODItem]) -> ()) -> ()
+    func fetchASAPODItems(numberOfASAPODItemsToFetch : Int, completion : @escaping ([ASAPODItem]) -> ()) -> ()
     {
         var items = [ASAPODItem]()
+        let today = Date()
         
-        for i in offset...(offset+size)
+        for i in 0...numberOfImagesToFetch
         {
-            let request = ASAPODRequest()
-            let date = Date().addingTimeInterval(TimeInterval(-i*24*60*60))
-
-            request.fetchImage(date: date, hd: false, completion: {
-                (item) in
-                items.append(item)
-                if items.count == size
+            let currentDateString = today.addingTimeInterval(TimeInterval(-i*24*60*60)).parseDateForRequest()
+            
+            // First, check if the item is in core data
+            if let apodItem = try? ASAPODItem.fetchItem(date: currentDateString, context: managedContext),
+                apodItem != nil
+            {
+                items.append(apodItem!)
+                if items.count == numberOfImagesToFetch
                 {
                     completion(items)
                 }
-            })
+            }
+            
+            // If no saved item is to be found - fetch item from the API, and save it to core data
+            DispatchQueue.global().async
+                {
+                    self.apodRequest.fetchASAPODItem(date: currentDateString, hd: false, completion: { (item) in
+                        items.append(item)
+                        
+                        if items.count == numberOfASAPODItemsToFetch
+                        {
+                            completion(items)
+                        }
+                    })
+            }
         }
     }
-    
-    private func calculateNumberOfDaysSinceLastUpdate() -> (Int)
-    {
-        // Fetch last update from Core Data
-        // TODO fetch request
-        var lastUpdateDate = Date()
-//        let fetchRequest = NSFetchRequest
-        
-        do
-        {
-            lastUpdateDate = try managedContext.fetch(ASAPODItem.fetchRequest() as! NSFetchRequest<NSFetchRequestResult>)
-        }
-        catch let error as NSError
-        {
-            print("Could not fetch. \(error), \(error.userInfo)")
-        }
-        
-        let today = Date()
-        
-        // Replace the hour (time) of both dates with 00:00
-        let date1 = calendar.startOfDay(for: lastUpdateDate)
-        let date2 = calendar.startOfDay(for: today)
-        
-        let components = calendar.dateComponents([.day], from: date1, to: date2)
-        
-        return components.day!
-    }
+
+
 }

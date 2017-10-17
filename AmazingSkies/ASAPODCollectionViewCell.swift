@@ -7,14 +7,22 @@
 //
 
 import UIKit
+import AlamofireImage
 
 class ASAPODCollectionViewCell: UICollectionViewCell
 {
+    // Cache for the thumbnails
+    let imageCache = AutoPurgingImageCache(
+        memoryCapacity: 100_000_000,
+        preferredMemoryUsageAfterPurge: 60_000_000
+    )
+    let container = AppDelegate.persistentContainer
+    
     @IBOutlet weak var imageView: UIImageView!
         {
         didSet
         {
-            updateUI()
+            //updateUI()
         }
     }
     
@@ -33,12 +41,7 @@ class ASAPODCollectionViewCell: UICollectionViewCell
             updateUI()
         }
     }
-    
-    override func awakeFromNib()
-    {
-        super.awakeFromNib()
-        updateUI()
-    }
+
     
     override func prepareForReuse()
     {
@@ -47,6 +50,45 @@ class ASAPODCollectionViewCell: UICollectionViewCell
 
     fileprivate func updateUI()
     {
+        // First check if there is any cached image
+        if let avatarImage = self.imageCache.image(withIdentifier: (self.apodItem?.id)!)
+        {
+            self.imageView?.image = avatarImage
+        }
+        // If not, check fot image in core data
+        else if self.apodItem?.thumbnail_image_data != nil
+        {
+            self.imageView.image = UIImage(data: self.apodItem!.thumbnail_image_data! as Data)
+        }
+        
+        // If no saved image data is to be found - fetch image from url, and save the image
+        else if let imageURL = apodItem?.url
+        {
+            if let url = URL(string: imageURL)
+            {
+                DispatchQueue.global().async
+                    {
+                        [weak self] in
+                        if let data = try? Data(contentsOf: url)
+                        {
+                            if (self?.apodItem?.url)! == url.absoluteString
+                            {
+                                DispatchQueue.main.async
+                                    {
+                                        let avatarImage = UIImage(data: data)
+                                        self?.imageView?.image = avatarImage
+                                        self?.imageCache.add(avatarImage!, withIdentifier: (self?.apodItem?.id)!)
+                                }
+                                
+                                self?.container.performBackgroundTask
+                                    {(context) in
+                                        ASAPODItem.setThumbnailImageData(id: (self?.apodItem?.id!)!, imageData: data, context: context)
+                                }
+                            }
+                        }
+                }
+            }
+        }
         self.imageView?.image = image
     }
 }

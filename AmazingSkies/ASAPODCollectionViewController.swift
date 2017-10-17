@@ -12,13 +12,10 @@ import CoreData
 private let reuseIdentifier = "ASAPODCollectionViewCell"
 
 class ASAPODCollectionViewController: UICollectionViewController {
+    
+    let apodDA = ASApodDA(managedContext: AppDelegate.persistentContainer.viewContext)
+    var apodItems : [ASAPODItem] = []
 
-    let apodDA = ASApodDA()
-    var fetchedResultsController : NSFetchedResultsController<ASAPODItem>!
-    
-    let loadingQueue = OperationQueue()
-    var loadingOperations = [IndexPath : ASAPODImageRequest]()
-    
     override func viewDidLoad()
     {
         super.viewDidLoad()
@@ -26,24 +23,16 @@ class ASAPODCollectionViewController: UICollectionViewController {
         let layout = collectionViewLayout as! UICollectionViewFlowLayout
         layout.itemSize = CGSize(width: width, height: width)
         
-        apodDA.fetchNewImages { (items) in
-            print(items.count)
-        }
+        apodDA.fetchASAPODItems(numberOfASAPODItemsToFetch: 9, completion:{ [weak self] (items) in
+            self?.apodItems = items
+            self?.collectionView?.reloadData()
+            print(items)
+        })
     }
     
     override func viewWillAppear(_ animated: Bool)
     {
-        let fetchRequest:NSFetchRequest<ASAPODItem> = ASAPODItem.fetchRequest()
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: AppDelegate.persistentContainer.viewContext, sectionNameKeyPath: nil, cacheName: nil)
-        do
-        {
-            try fetchedResultsController.performFetch()
-            collectionView?.reloadData()
-        }
-        catch let error
-        {
-            print(error)
-        }
+        super.viewWillAppear(animated)
     }
 
 
@@ -65,7 +54,7 @@ class ASAPODCollectionViewController: UICollectionViewController {
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath)
     {
-        performSegue(withIdentifier: "Show HD image", sender: fetchedResultsController.object(at: indexPath))
+        performSegue(withIdentifier: "Show HD image", sender: apodItems[indexPath.row])
     }
 
     // MARK: UICollectionViewDataSource
@@ -78,7 +67,7 @@ class ASAPODCollectionViewController: UICollectionViewController {
 
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int
     {
-        return fetchedResultsController.fetchedObjects?.count ?? 0
+        return apodItems.count
     }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell
@@ -88,7 +77,7 @@ class ASAPODCollectionViewController: UICollectionViewController {
         if let apodCell = cell  as? ASAPODCollectionViewCell
         {
 
-            apodCell.apodItem = fetchedResultsController.object(at: indexPath)
+            apodCell.apodItem = apodItems[indexPath.row]
             
             return apodCell
         }
