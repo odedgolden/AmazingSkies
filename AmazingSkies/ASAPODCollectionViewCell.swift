@@ -77,7 +77,12 @@ class ASAPODCollectionViewCell: UICollectionViewCell
                                     {
                                         let avatarImage = UIImage(data: data)
                                         self?.imageView?.image = avatarImage
-                                        self?.imageCache.add(avatarImage!, withIdentifier: (self?.apodItem?.id)!)
+                                        if let imageID = self?.apodItem?.id,
+                                            avatarImage != nil
+                                        {
+                                            self?.imageCache.add(avatarImage!, withIdentifier: imageID)
+                                            
+                                        }
                                 }
                                 
                                 self?.container.performBackgroundTask
@@ -89,6 +94,5 @@ class ASAPODCollectionViewCell: UICollectionViewCell
                 }
             }
         }
-        self.imageView?.image = image
     }
 }
