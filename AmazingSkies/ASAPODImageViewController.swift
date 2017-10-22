@@ -22,7 +22,15 @@ class ASAPODImageViewController: UIViewController
             scrollView.addSubview(imageView)
         }
     }
+    @IBOutlet weak var imageTitleLabel: UILabel!
     
+    var imageTitle : String?
+    {
+        didSet
+        {
+            imageTitleLabel.text = imageTitle
+        }
+    }
     var imageURL : URL?
     {
         didSet

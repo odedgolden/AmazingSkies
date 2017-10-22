@@ -48,6 +48,7 @@ class ASAPODCollectionViewController: UICollectionViewController {
             if let item = sender as? ASAPODItem
             {
                 vc.imageURL = URL(string: item.hdurl!)
+                vc.imageTitle = item.title
             }
         }
     }
